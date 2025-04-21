@@ -1,4 +1,4 @@
-package com.example.univents_mobile
+package com.supabase.login
 
 import io.flutter.embedding.android.FlutterActivity
 
