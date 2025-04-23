@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:univents_mobile/main.dart';
+import 'package:get/get.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -206,6 +207,8 @@ Row logInHeader(BuildContext context) {
             idToken: idToken,
             accessToken: accessToken,
           );
+
+          Get.offNamed('/dashboard');
         } catch (e) {
           print('Error during Google Sign-In: $e');
         }
