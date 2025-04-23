@@ -3,6 +3,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:univents_mobile/main.dart';
 import 'package:get/get.dart';
+import 'package:univents_mobile/config/config.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -32,9 +33,7 @@ class _LoginPageState extends State<LoginPage> {
       resizeToAvoidBottomInset: false,
       body: Stack(
         children: [
-          // Background image
           background(),
-          // Scrollable content
           SingleChildScrollView(
             child: Container(
               margin: EdgeInsets.symmetric(
@@ -92,7 +91,7 @@ class _LoginPageState extends State<LoginPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          margin: EdgeInsets.symmetric(horizontal: 30), // Add margin to align with TextField
+          margin: EdgeInsets.symmetric(horizontal: 30),
           child: Text(
             "Password",
             style: TextStyle(color: Colors.white),
@@ -122,7 +121,7 @@ class _LoginPageState extends State<LoginPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          margin: EdgeInsets.symmetric(horizontal: 30), // Add margin to align with TextField
+          margin: EdgeInsets.symmetric(horizontal: 30),
           child: Text(
             "AdDUNET Username",
             style: TextStyle(color: Colors.white),
@@ -152,9 +151,12 @@ class _LoginPageState extends State<LoginPage> {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         SizedBox(
-          height: MediaQuery.of(context).size.height * 0.05,
-          width: MediaQuery.of(context).size.width * 0.1,
-          child: Placeholder(),
+          height: 70,
+          width: 70,
+          child: Image.network(
+            adduLogo,
+            fit: BoxFit.contain,
+          ),
         ),
         SizedBox(width: 10),
         Column(
@@ -188,10 +190,14 @@ class _LoginPageState extends State<LoginPage> {
       decoration: BoxDecoration(
         image: DecorationImage(
           image: NetworkImage(
-            'https://abjnclqznfxeccdjmwkg.supabase.co/storage/v1/object/sign/assets/UniVentsLogInBG.jpeg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6InN0b3JhZ2UtdXJsLXNpZ25pbmcta2V5XzkzMDBhOGRmLTJlZDctNDNlMi1hODYwLTU2YjRhZDg5YzcwYSJ9.eyJ1cmwiOiJhc3NldHMvVW5pVmVudHNMb2dJbkJHLmpwZWciLCJpYXQiOjE3NDUyMjM4NTksImV4cCI6MTc3Njc1OTg1OX0.pV-OE9spFmFYkC5In_8kBYaaP_KeMIiWmgcQqJHVxJk',
+            logInBGImage,
           ),
           fit: BoxFit.cover,
           alignment: Alignment.center,
+          colorFilter: ColorFilter.mode(
+          Colors.black.withOpacity(0.5), // Adjust the color and opacity
+            BlendMode.darken, // Blend mode for the color filter
+          ),
         ),
       ),
     );

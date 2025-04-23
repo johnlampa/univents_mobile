@@ -11,28 +11,41 @@ class Dashboard extends StatefulWidget {
 }
 
 class _DashboardState extends State<Dashboard> {
-  final supabase = Supabase.instance.client; // Access Supabase client
+  final supabase = Supabase.instance.client;
+  String? userName;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserName();
+  }
+
+  Future<void> _fetchUserName() async {
+    final user = supabase.auth.currentUser;
+    if (user != null) {
+      setState(() {
+        userName = user.userMetadata?['full_name'] ?? user.email;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Dashboard'), // Title of the AppBar
-        backgroundColor: Colors.blueAccent, // Background color of the AppBar
+        title: const Text('Dashboard'), 
+        backgroundColor: Colors.blueAccent, 
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout), // Logout icon
+            icon: const Icon(Icons.logout), 
             onPressed: () async {
               try {
-                // Sign out from Supabase
                 await supabase.auth.signOut();
 
-                // Sign out from GoogleSignIn
                 final GoogleSignIn googleSignIn = GoogleSignIn();
                 await googleSignIn.signOut();
 
-                // Navigate back to the login page
-                Get.offAllNamed('/login'); // Use GetX to navigate to the login page
+                Get.offAllNamed('/login');
               } catch (e) {
                 print('Error during logout: $e');
               }
@@ -40,7 +53,14 @@ class _DashboardState extends State<Dashboard> {
           ),
         ],
       ),
-      body: const Placeholder(), // Body of the Scaffold
+      body: Center(
+        child: userName != null
+            ? Text(
+                'Welcome, $userName!', 
+                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              )
+            : const CircularProgressIndicator(), 
+      ),
     );
   }
 }
