@@ -160,6 +160,7 @@ class _LoginPageState extends State<LoginPage> {
         ),
         SizedBox(width: 10),
         Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               "Ateneo",
@@ -261,7 +262,31 @@ class _LoginPageState extends State<LoginPage> {
           print('Error during Google Sign-In: $e');
         }
       },
-      child: const Text("Sign in with Google"),
+      child: SizedBox(
+        height: MediaQuery.of(context).size.height * 0.05,
+        width: MediaQuery.of(context).size.width * 0.3,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              "Log in with",
+              style: TextStyle(
+                fontWeight: FontWeight.w900, 
+                color: Colors.black, 
+              ),
+            ),
+            SizedBox(width: 2),
+            SizedBox(
+              width: 30, 
+              height: 30,
+              child: Image.network(
+                googleLogo,
+                fit: BoxFit.contain,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
