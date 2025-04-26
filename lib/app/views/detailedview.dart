@@ -1,21 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:univents_mobile/config/config.dart';
+import 'package:get/get.dart';
+import 'package:univents_mobile/events.dart'; // Import the Event model
 
-class DetailedView extends StatefulWidget {
+class DetailedView extends StatelessWidget {
   const DetailedView({super.key});
 
   @override
-  State<DetailedView> createState() => _DetailedViewState();
-}
-
-class _DetailedViewState extends State<DetailedView> {
-  @override
   Widget build(BuildContext context) {
+    // Retrieve the event object passed as an argument
+    final Event event = Get.arguments as Event;
+
     return Scaffold(
-      // appBar: AppBar(
-      //   title: const Text(''),
-      //   backgroundColor: Colors.blue.withValues(alpha: 0.0),
-      // ),
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -25,11 +20,11 @@ class _DetailedViewState extends State<DetailedView> {
                   height: MediaQuery.of(context).size.height * 0.5,
                   decoration: BoxDecoration(
                     image: DecorationImage(
-                      image: NetworkImage(sampleEventBanner),
+                      image: NetworkImage(event.banner), // Use event banner
                       fit: BoxFit.cover,
                     ),
                     border: Border.all(color: Colors.black, width: 2),
-                    borderRadius: BorderRadius.only(
+                    borderRadius: const BorderRadius.only(
                       bottomLeft: Radius.circular(25),
                       bottomRight: Radius.circular(25),
                     ),
@@ -38,9 +33,9 @@ class _DetailedViewState extends State<DetailedView> {
                 Positioned(
                   bottom: 30,
                   left: 30,
-                  child: const Text(
-                    'Event Title',
-                    style: TextStyle(
+                  child: Text(
+                    event.title, // Use event title
+                    style: const TextStyle(
                       fontSize: 30,
                       fontWeight: FontWeight.w900,
                       color: Colors.white,
@@ -52,20 +47,18 @@ class _DetailedViewState extends State<DetailedView> {
                   left: 10,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                          Colors.transparent, // Removes background color
-                      elevation: 0, // Removes the shadow
-                      shadowColor:
-                          Colors.transparent, // Ensures no shadow is applied
+                      backgroundColor: Colors.transparent,
+                      elevation: 0,
+                      shadowColor: Colors.transparent,
                     ),
                     onPressed: () {
                       Navigator.pop(context);
                     },
-                    child: Icon(
+                    child: const Icon(
                       Icons.arrow_back_ios_outlined,
                       color: Colors.white,
                       size: 30,
-                    ), // Set icon color explicitly
+                    ),
                   ),
                 ),
               ],
@@ -76,47 +69,35 @@ class _DetailedViewState extends State<DetailedView> {
                 children: [
                   const SizedBox(height: 20),
                   Row(
-                    spacing: 20,
-                    crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Icon(Icons.calendar_month),
-                      Text('January 1, 2023', style: TextStyle(fontSize: 16)),
+                      const Icon(Icons.calendar_month),
+                      const SizedBox(width: 10),
+                      Text(
+                        event.datetimestart.toLocal().toString().split(' ')[0], // Display event date
+                        style: const TextStyle(fontSize: 16),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 20),
                   Row(
-                    spacing: 20,
-                    crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Icon(Icons.access_time_outlined),
-                      Text('7 PM - 9 PM', style: TextStyle(fontSize: 16)),
+                      const Icon(Icons.access_time_outlined),
+                      const SizedBox(width: 10),
+                      Text(
+                        '${event.datetimestart.toLocal().hour}:${event.datetimestart.toLocal().minute} - ${event.datetimeend.toLocal().hour}:${event.datetimeend.toLocal().minute}', // Display event time
+                        style: const TextStyle(fontSize: 16),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 20),
                   Row(
-                    spacing: 20,
-                    crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Icon(Icons.group),
-                      Text('Accountancy', style: TextStyle(fontSize: 16)),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    spacing: 20,
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Icon(Icons.label),
-                      Text('Culture and Arts', style: TextStyle(fontSize: 16)),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    spacing: 20,
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Icon(Icons.location_on),
-                      Text('Martin Hall', style: TextStyle(fontSize: 16)),
+                      const Icon(Icons.location_on),
+                      const SizedBox(width: 10),
+                      Text(
+                        event.location, // Display event location
+                        style: const TextStyle(fontSize: 16),
+                      ),
                     ],
                   ),
                 ],
@@ -132,9 +113,9 @@ class _DetailedViewState extends State<DetailedView> {
                     style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
-                    'Event Description goes here. This is a detailed view of the event. Event Description goes here. This is a detailed view of the event. Event Description goes here. This is a detailed view of the event.',
-                    style: TextStyle(fontSize: 16),
+                  Text(
+                    event.description, // Display event description
+                    style: const TextStyle(fontSize: 16),
                   ),
                   const SizedBox(height: 20),
                 ],

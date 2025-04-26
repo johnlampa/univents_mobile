@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:get/get.dart';
 import 'package:univents_mobile/config/config.dart';
 import 'package:univents_mobile/app/widgets/bottomnav.dart';
+import 'package:univents_mobile/event_database.dart';
 import 'package:univents_mobile/organization_database.dart';
 
 class Dashboard extends StatefulWidget {
@@ -91,20 +92,12 @@ class _DashboardState extends State<Dashboard> {
                 child: const Text('Go to Detailed View'),
               ),
               Container(
-                height: 150,
-                width: 150,
                 padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.all(Radius.circular(10)),
-                  border: Border.all(
-                    color: Colors.grey,
-                    width: 1,
-                  ),
+                child: EventsListView(
+                  userName: userName,
+                  eventDatabase: EventDatabase(), // Pass the EventDatabase instance
                 ),
-                child: OrganizationsListView(userName: userName, organizationDatabase: organizationDatabase)
               )
-      
             ],
           ),
         ),
@@ -158,11 +151,84 @@ class OrganizationsListView extends StatelessWidget {
             itemBuilder: (context, index) {
               final organization = organizations[index];
               return ListTile(
-                title: Text(organization.name),
+                title: Text(organization.uid ?? 'No ID'),
               );
             },
           );
         }
+    );
+  }
+}
+
+class EventsListView extends StatelessWidget {
+  const EventsListView({
+    super.key,
+    required this.userName,
+    required this.eventDatabase,
+  });
+
+  final String? userName;
+  final EventDatabase eventDatabase;
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder(
+      stream: eventDatabase.stream, // Updated to use events stream
+      builder: (context, snapshot) {
+        // Loading
+        if (!snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        // Loaded
+        final events = snapshot.data!;
+
+        // List of events in separate cards
+        return ListView.builder(
+          shrinkWrap: true, // Ensures the ListView takes only the necessary space
+          physics: const NeverScrollableScrollPhysics(), // Prevents nested scrolling issues
+          itemCount: events.length,
+          itemBuilder: (context, index) {
+            final event = events[index];
+            return GestureDetector(
+              onTap: () {
+                // Navigate to DetailedView with event details
+                Get.toNamed(
+                  '/detailedview',
+                  arguments: event, // Pass the event object as an argument
+                );
+              },
+              child: Card(
+                margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                elevation: 4,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        event.title,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Date: ${event.datetimestart.toLocal().toString().split(' ')[0]}', // Extracting only the date part
+                        style: const TextStyle(fontSize: 14, color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }

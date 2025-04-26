@@ -1,5 +1,5 @@
 class Organization {
-  String? uuid;
+  String? uid;
   String banner;
   String logo;
   String acronym;
@@ -11,7 +11,7 @@ class Organization {
   bool status;
 
   Organization({
-    required this.uuid,
+    required this.uid,
     required this.banner,
     required this.logo,
     required this.acronym,
@@ -26,7 +26,7 @@ class Organization {
   factory Organization.fromMap(Map<String, dynamic> map) {
     print('Raw data from Supabase: $map'); // Debug print
     return Organization(
-      uuid: map['uuid'] as String?,
+      uid: map['uid'] as String?,
       banner: map['banner'] as String,
       logo: map['logo'] as String,
       acronym: map['acronym'] as String,
@@ -41,7 +41,7 @@ class Organization {
 
   Map<String, dynamic> toMap() {
     return {
-      'uuid': uuid,
+      'uid': uid,
       'banner': banner,
       'logo': logo,
       'acronym': acronym,
