@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:univents_mobile/app/views/detailedview.dart';
 import 'package:univents_mobile/app/views/login.dart';
 import 'package:univents_mobile/app/views/dashboard.dart';
 import 'package:univents_mobile/app/views/search.dart';
@@ -17,6 +18,10 @@ class AppPages {
     GetPage(
       name: AppRoutes.search,
       page: () => const Search(), // Dashboard route
+    ),
+    GetPage(
+      name: AppRoutes.detailedView,
+      page: () => const DetailedView(), // DetailedView route
     ),
   ];
 }
