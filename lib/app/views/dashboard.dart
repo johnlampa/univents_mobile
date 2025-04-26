@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:get/get.dart';
 import 'package:univents_mobile/config/config.dart';
 import 'package:univents_mobile/app/widgets/bottomnav.dart';
+import 'package:univents_mobile/organization_database.dart';
 
 class Dashboard extends StatefulWidget {
   const Dashboard({super.key});
@@ -31,6 +32,11 @@ class _DashboardState extends State<Dashboard> {
       });
     }
   }
+
+  final organizationDatabase = OrganizationDatabase();
+  final organizationController = TextEditingController();
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -84,6 +90,21 @@ class _DashboardState extends State<Dashboard> {
                 },
                 child: const Text('Go to Detailed View'),
               ),
+              Container(
+                height: 150,
+                width: 150,
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.all(Radius.circular(10)),
+                  border: Border.all(
+                    color: Colors.grey,
+                    width: 1,
+                  ),
+                ),
+                child: OrganizationsListView(userName: userName, organizationDatabase: organizationDatabase)
+              )
+      
             ],
           ),
         ),
@@ -104,6 +125,44 @@ class _DashboardState extends State<Dashboard> {
           }
         },
       ),
+    );
+  }
+}
+
+class OrganizationsListView extends StatelessWidget {
+  const OrganizationsListView({
+    super.key,
+    required this.userName,
+    required this.organizationDatabase,
+  });
+
+  final String? userName;
+  final OrganizationDatabase organizationDatabase;
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder(
+        stream: organizationDatabase.stream,
+        builder: (context, snapshot) {
+          //loading
+          if (!snapshot.hasData) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          //loaded
+          final organizations = snapshot.data!;
+
+          //list of organizations
+          return ListView.builder(
+            itemCount: organizations.length,
+            itemBuilder: (context, index) {
+              final organization = organizations[index];
+              return ListTile(
+                title: Text(organization.name),
+              );
+            },
+          );
+        }
     );
   }
 }
