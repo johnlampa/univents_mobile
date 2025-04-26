@@ -4,6 +4,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:get/get.dart';
 import 'package:univents_mobile/config/config.dart';
 import 'package:univents_mobile/app/widgets/bottomnav.dart';
+import 'package:univents_mobile/event_database.dart';
+import 'package:univents_mobile/organization_database.dart';
 
 class Dashboard extends StatefulWidget {
   const Dashboard({super.key});
@@ -31,6 +33,11 @@ class _DashboardState extends State<Dashboard> {
       });
     }
   }
+
+  final organizationDatabase = OrganizationDatabase();
+  final organizationController = TextEditingController();
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -84,6 +91,13 @@ class _DashboardState extends State<Dashboard> {
                 },
                 child: const Text('Go to Detailed View'),
               ),
+              Container(
+                padding: const EdgeInsets.all(10),
+                child: EventsListView(
+                  userName: userName,
+                  eventDatabase: EventDatabase(), // Pass the EventDatabase instance
+                ),
+              )
             ],
           ),
         ),
@@ -104,6 +118,117 @@ class _DashboardState extends State<Dashboard> {
           }
         },
       ),
+    );
+  }
+}
+
+class OrganizationsListView extends StatelessWidget {
+  const OrganizationsListView({
+    super.key,
+    required this.userName,
+    required this.organizationDatabase,
+  });
+
+  final String? userName;
+  final OrganizationDatabase organizationDatabase;
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder(
+        stream: organizationDatabase.stream,
+        builder: (context, snapshot) {
+          //loading
+          if (!snapshot.hasData) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          //loaded
+          final organizations = snapshot.data!;
+
+          //list of organizations
+          return ListView.builder(
+            itemCount: organizations.length,
+            itemBuilder: (context, index) {
+              final organization = organizations[index];
+              return ListTile(
+                title: Text(organization.uid ?? 'No ID'),
+              );
+            },
+          );
+        }
+    );
+  }
+}
+
+class EventsListView extends StatelessWidget {
+  const EventsListView({
+    super.key,
+    required this.userName,
+    required this.eventDatabase,
+  });
+
+  final String? userName;
+  final EventDatabase eventDatabase;
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder(
+      stream: eventDatabase.stream, // Updated to use events stream
+      builder: (context, snapshot) {
+        // Loading
+        if (!snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        // Loaded
+        final events = snapshot.data!;
+
+        // List of events in separate cards
+        return ListView.builder(
+          shrinkWrap: true, // Ensures the ListView takes only the necessary space
+          physics: const NeverScrollableScrollPhysics(), // Prevents nested scrolling issues
+          itemCount: events.length,
+          itemBuilder: (context, index) {
+            final event = events[index];
+            return GestureDetector(
+              onTap: () {
+                // Navigate to DetailedView with event details
+                Get.toNamed(
+                  '/detailedview',
+                  arguments: event, // Pass the event object as an argument
+                );
+              },
+              child: Card(
+                margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                elevation: 4,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        event.title,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Date: ${event.datetimestart.toLocal().toString().split(' ')[0]}', // Extracting only the date part
+                        style: const TextStyle(fontSize: 14, color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }
