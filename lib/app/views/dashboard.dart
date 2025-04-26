@@ -42,21 +42,15 @@ class _DashboardState extends State<Dashboard> {
             SizedBox(
               height: 30,
               width: 30,
-              child: Image.network(
-                adduLogo,
-                fit: BoxFit.contain,
-              ),
+              child: Image.network(adduLogo, fit: BoxFit.contain),
             ),
             const SizedBox(width: 10),
             userName != null
-            ? Text(
-                'Welcome, $userName!',
-                style: const TextStyle(fontSize: 18),
-              )
-            : const Text(
-                'Dashboard',
-                style: TextStyle(fontSize: 18),
-            ),
+                ? Text(
+                  'Welcome, $userName!',
+                  style: const TextStyle(fontSize: 18),
+                )
+                : const Text('Dashboard', style: TextStyle(fontSize: 18)),
           ],
         ),
         actions: [
@@ -79,9 +73,19 @@ class _DashboardState extends State<Dashboard> {
       ),
       body: SingleChildScrollView(
         child: Center(
-          child: userName != null
-              ? const Placeholder()
-              : const CircularProgressIndicator(),
+          child: Column(
+            children: [
+              userName != null
+                  ? const Placeholder()
+                  : const CircularProgressIndicator(),
+              ElevatedButton(
+                onPressed: () {
+                  Get.toNamed('/detailedview');
+                },
+                child: const Text('Go to Detailed View'),
+              ),
+            ],
+          ),
         ),
       ),
       bottomNavigationBar: BottomNav(
