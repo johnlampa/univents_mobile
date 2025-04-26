@@ -1,8 +1,8 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:univents_mobile/organization.dart';
+import 'package:univents_mobile/app/data/models/events.dart';
 
-class OrganizationDatabase {
-  final database = Supabase.instance.client.from('organizations');
+class EventDatabase {
+  final database = Supabase.instance.client.from('events');
 
   // Create
   // Future createOrganization(Organization newOrganization) async {
@@ -10,9 +10,9 @@ class OrganizationDatabase {
   // }
 
   // Read
-  final stream = Supabase.instance.client.from('organizations').stream(
+  final stream = Supabase.instance.client.from('events').stream(
     primaryKey: ['uid'],
-  ).map((data) => data.map((organizationMap) => Organization.fromMap(organizationMap)).toList());
+  ).map((data) => data.map((eventMap) => Event.fromMap(eventMap)).toList());
 
   // Update
   // Future updateOrganization(Organization oldOrganization, String newContent) async {

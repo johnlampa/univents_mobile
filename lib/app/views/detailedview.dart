@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:univents_mobile/events.dart'; // Import the Event model
+import 'package:univents_mobile/app/data/models/events.dart'; // Import the Event model
 
 class DetailedView extends StatelessWidget {
   const DetailedView({super.key});
