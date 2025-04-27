@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:get/get.dart';
+import 'package:univents_mobile/app/data/models/organization.dart';
 import 'package:univents_mobile/config/config.dart';
 import 'package:univents_mobile/app/widgets/bottomnav.dart';
 import 'package:univents_mobile/app/data/databases/event_database.dart';
@@ -43,38 +44,26 @@ class _DashboardState extends State<Dashboard> {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        title: Row(
-          children: [
-            SizedBox(
-              height: 30,
-              width: 30,
-              child: Image.network(adduLogo, fit: BoxFit.contain),
-            ),
-            const SizedBox(width: 10),
-            userName != null
-                ? Text(
-                  'Welcome, $userName!',
-                  style: const TextStyle(fontSize: 18),
-                )
-                : const Text('Dashboard', style: TextStyle(fontSize: 18)),
-          ],
+        toolbarHeight: 80,
+        title: Container(
+          margin: const EdgeInsets.only(top: 0),
+          child: Row(
+            children: [
+              SizedBox(
+                height: 50,
+                width: 50,
+                child: Image.network(adduLogo, fit: BoxFit.contain),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                'Ateneo Events',
+                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () async {
-              try {
-                await supabase.auth.signOut();
-
-                final GoogleSignIn googleSignIn = GoogleSignIn();
-                await googleSignIn.signOut();
-
-                Get.offAllNamed('/login');
-              } catch (e) {
-                print('Error during logout: $e');
-              }
-            },
-          ),
+          logOutButton(),
         ],
       ),
       body: SingleChildScrollView(
@@ -117,6 +106,35 @@ class _DashboardState extends State<Dashboard> {
       ),
     );
   }
+
+  IconButton logOutButton() {
+    return IconButton(
+          icon: const Icon(Icons.logout),
+          onPressed: () async {
+            try {
+              await supabase.auth.signOut();
+
+              final GoogleSignIn googleSignIn = GoogleSignIn();
+              await googleSignIn.signOut();
+
+              Get.offAllNamed('/login');
+            } catch (e) {
+              print('Error during logout: $e');
+            }
+          },
+        );
+  }
+
+  SizedBox getUserName() {
+    return SizedBox(
+            child: userName != null
+            ? Text(
+              'Welcome, $userName!',
+              style: const TextStyle(fontSize: 18),
+            )
+            : const Text('Dashboard', style: TextStyle(fontSize: 18)),
+          );
+  }
 }
 
 class OrganizationsListView extends StatelessWidget {
@@ -134,15 +152,12 @@ class OrganizationsListView extends StatelessWidget {
     return StreamBuilder(
         stream: organizationDatabase.stream,
         builder: (context, snapshot) {
-          //loading
           if (!snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          //loaded
           final organizations = snapshot.data!;
 
-          //list of organizations
           return ListView.builder(
             itemCount: organizations.length,
             itemBuilder: (context, index) {
@@ -169,131 +184,193 @@ class EventsListView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder(
-      stream: eventDatabase.stream, // Updated to use events stream
-      builder: (context, snapshot) {
-        // Loading
-        if (!snapshot.hasData) {
-          return const Center(child: CircularProgressIndicator());
-        }
+    final TextEditingController searchController = TextEditingController();
 
-        // Loaded
-        final events = snapshot.data!;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        searchBar(searchController),
+        const SizedBox(height: 10),
 
-        // Get current date and time
-        final now = DateTime.now();
+        StreamBuilder(
+          stream: eventDatabase.stream, 
+          builder: (context, snapshot) {
+            if (!snapshot.hasData) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
-        // Filter events into categories
-        final ongoingEvents = events.where((event) {
-          return event.datetimestart.isBefore(now) && event.datetimeend.isAfter(now);
-        }).toList();
+            final events = snapshot.data!;
+            final now = DateTime.now();
 
-        final upcomingEvents = events.where((event) {
-          return event.datetimestart.isAfter(now);
-        }).toList();
+            final ongoingEvents = events.where((event) {
+              return event.datetimestart.isBefore(now) && event.datetimeend.isAfter(now);
+            }).toList();
 
-        final finishedEvents = events.where((event) {
-          return event.datetimeend.isBefore(now);
-        }).toList();
+            final upcomingEvents = events.where((event) {
+              return event.datetimestart.isAfter(now);
+            }).toList();
 
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Ongoing Events Section
-            if (ongoingEvents.isNotEmpty) ...[
-              Padding(
-                padding: EdgeInsets.only(left: MediaQuery.of(context).size.width * 0.04),
-                child: Text(
-                  "Ongoing Events",
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                ),
-              ),
-              GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 8,
-                  mainAxisSpacing: 8,
-                  childAspectRatio: 1.5,
-                ),
-                itemCount: ongoingEvents.length,
-                itemBuilder: (context, index) {
-                  final event = ongoingEvents[index];
-                  return EventCard(
-                    event: event,
-                    onTap: () {
-                      Get.toNamed('/detailedview', arguments: event);
+            final finishedEvents = events.where((event) {
+              return event.datetimeend.isBefore(now);
+            }).toList();
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (ongoingEvents.isNotEmpty) ...[
+                  Padding(
+                    padding: EdgeInsets.only(left: MediaQuery.of(context).size.width * 0.04),
+                    child: Text(
+                      "Ongoing Events",
+                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 8,
+                      mainAxisSpacing: 8,
+                      childAspectRatio: 1.5,
+                    ),
+                    itemCount: ongoingEvents.length,
+                    itemBuilder: (context, index) {
+                      final event = ongoingEvents[index];
+                      return EventCard(
+                        event: event,
+                        onTap: () async {
+                          final organization = await OrganizationDatabase().database
+                              .select()
+                              .eq('uid', event.orguid)
+                              .single();
+                          Get.toNamed(
+                            '/detailedview',
+                            arguments: {
+                              'event': event,
+                              'organization': Organization.fromMap(organization),
+                            },
+                          );
+                        },
+                      );
                     },
-                  );
-                },
-              ),
-            ],
-
-            // Upcoming Events Section
-            if (upcomingEvents.isNotEmpty) ...[
-              Padding(
-                padding: EdgeInsets.only(left: MediaQuery.of(context).size.width * 0.04),
-                child: Text(
-                  "Upcoming Events",
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                ),
-              ),
-              GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 8,
-                  mainAxisSpacing: 8,
-                  childAspectRatio: 1.5,
-                ),
-                itemCount: upcomingEvents.length,
-                itemBuilder: (context, index) {
-                  final event = upcomingEvents[index];
-                  return EventCard(
-                    event: event,
-                    onTap: () {
-                      Get.toNamed('/detailedview', arguments: event);
+                  ),
+                ],
+                if (upcomingEvents.isNotEmpty) ...[
+                  Padding(
+                    padding: EdgeInsets.only(left: MediaQuery.of(context).size.width * 0.04),
+                    child: Text(
+                      "Upcoming Events",
+                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 8,
+                      mainAxisSpacing: 8,
+                      childAspectRatio: 1.5,
+                    ),
+                    itemCount: upcomingEvents.length,
+                    itemBuilder: (context, index) {
+                      final event = upcomingEvents[index];
+                      return EventCard(
+                        event: event,
+                        onTap: () async {
+                          final organization = await OrganizationDatabase().database
+                              .select()
+                              .eq('uid', event.orguid)
+                              .single();
+                          Get.toNamed(
+                            '/detailedview',
+                            arguments: {
+                              'event': event,
+                              'organization': Organization.fromMap(organization),
+                            },
+                          );
+                        },
+                      );
                     },
-                  );
-                },
-              ),
-            ],
-
-            // Finished Events Section
-            if (finishedEvents.isNotEmpty) ...[
-              Padding(
-                padding: EdgeInsets.only(left: MediaQuery.of(context).size.width * 0.04),
-                child: Text(
-                  "Finished Events",
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                ),
-              ),
-              GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 8,
-                  mainAxisSpacing: 8,
-                  childAspectRatio: 1.5,
-                ),
-                itemCount: finishedEvents.length,
-                itemBuilder: (context, index) {
-                  final event = finishedEvents[index];
-                  return EventCard(
-                    event: event,
-                    onTap: () {
-                      Get.toNamed('/detailedview', arguments: event);
+                  ),
+                ],
+                if (finishedEvents.isNotEmpty) ...[
+                  Padding(
+                    padding: EdgeInsets.only(left: MediaQuery.of(context).size.width * 0.04),
+                    child: Text(
+                      "Finished Events",
+                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 8,
+                      mainAxisSpacing: 8,
+                      childAspectRatio: 1.5,
+                    ),
+                    itemCount: finishedEvents.length,
+                    itemBuilder: (context, index) {
+                      final event = finishedEvents[index];
+                      return EventCard(
+                        event: event,
+                        onTap: () async {
+                          final organization = await OrganizationDatabase().database
+                              .select()
+                              .eq('uid', event.orguid)
+                              .single();
+                          Get.toNamed(
+                            '/detailedview',
+                            arguments: {
+                              'event': event,
+                              'organization': Organization.fromMap(organization),
+                            },
+                          );
+                        },
+                      );
                     },
-                  );
-                },
-              ),
-            ],
-          ],
-        );
-      },
+                  ),
+                ],
+              ],
+            );
+          },
+        ),
+      ],
     );
+  }
+
+  Padding searchBar(TextEditingController searchController) {
+    return Padding(
+        padding: const EdgeInsets.all(10.0),
+        child: TextField(
+          controller: searchController,
+          decoration: InputDecoration(
+            hintText: 'Search events...',
+            prefixIcon: const Icon(Icons.search),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(
+                color: Colors.blue,
+                width: 2.0,
+              ),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(
+                color: Colors.grey, 
+                width: 1.0,
+              ),
+            ),
+          ),
+          onChanged: (value) {
+          },
+        ),
+      );
   }
 }

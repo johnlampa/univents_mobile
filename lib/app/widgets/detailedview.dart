@@ -1,14 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:univents_mobile/app/data/models/events.dart'; // Import the Event model
+import 'package:univents_mobile/app/data/models/events.dart';
+import 'package:univents_mobile/app/data/models/organization.dart';
+import 'package:intl/intl.dart';
 
-class DetailedView extends StatelessWidget {
+class DetailedView extends StatefulWidget {
   const DetailedView({super.key});
 
   @override
+  State<DetailedView> createState() => _DetailedViewState();
+}
+
+class _DetailedViewState extends State<DetailedView> {
+  bool isDescriptionVisible = true; // State to track visibility of the description
+
+  @override
   Widget build(BuildContext context) {
-    // Retrieve the event object passed as an argument
-    final Event event = Get.arguments as Event;
+    final Map<String, dynamic> args = Get.arguments as Map<String, dynamic>;
+    final Event event = args['event'] as Event;
+    final Organization organization = args['organization'] as Organization;
 
     return Scaffold(
       body: SingleChildScrollView(
@@ -20,8 +30,12 @@ class DetailedView extends StatelessWidget {
                   height: MediaQuery.of(context).size.height * 0.5,
                   decoration: BoxDecoration(
                     image: DecorationImage(
-                      image: NetworkImage(event.banner), // Use event banner
+                      image: NetworkImage(event.banner),
                       fit: BoxFit.cover,
+                      colorFilter: ColorFilter.mode(
+                        Colors.black.withOpacity(0.5),
+                        BlendMode.darken,
+                      ),
                     ),
                     border: Border.all(color: Colors.black, width: 2),
                     borderRadius: const BorderRadius.only(
@@ -33,12 +47,17 @@ class DetailedView extends StatelessWidget {
                 Positioned(
                   bottom: 30,
                   left: 30,
-                  child: Text(
-                    event.title, // Use event title
-                    style: const TextStyle(
-                      fontSize: 30,
-                      fontWeight: FontWeight.w900,
-                      color: Colors.white,
+                  child: SizedBox(
+                    width: MediaQuery.of(context).size.width * 0.8,
+                    child: Text(
+                      event.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 30,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
                 ),
@@ -73,7 +92,9 @@ class DetailedView extends StatelessWidget {
                       const Icon(Icons.calendar_month),
                       const SizedBox(width: 10),
                       Text(
-                        event.datetimestart.toLocal().toString().split(' ')[0], // Display event date
+                        event.datetimestart.toLocal().day == event.datetimeend.toLocal().day
+                            ? DateFormat('MMMM d, yyyy').format(event.datetimestart.toLocal())
+                            : '${DateFormat('MMMM d, yyyy').format(event.datetimestart.toLocal())} - ${DateFormat('MMMM d, yyyy').format(event.datetimeend.toLocal())}',
                         style: const TextStyle(fontSize: 16),
                       ),
                     ],
@@ -84,8 +105,40 @@ class DetailedView extends StatelessWidget {
                       const Icon(Icons.access_time_outlined),
                       const SizedBox(width: 10),
                       Text(
-                        '${event.datetimestart.toLocal().hour}:${event.datetimestart.toLocal().minute} - ${event.datetimeend.toLocal().hour}:${event.datetimeend.toLocal().minute}', // Display event time
+                        '${DateFormat('h:mm a').format(event.datetimestart.toLocal())} - ${DateFormat('h:mm a').format(event.datetimeend.toLocal())}',
                         style: const TextStyle(fontSize: 16),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      const Icon(Icons.location_city),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          organization.name,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      const Icon(Icons.label),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          event.tags
+                              .map((tag) => tag[0].toUpperCase() + tag.substring(1))
+                              .join(', '),
+                          style: const TextStyle(fontSize: 16),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 2,
+                        ),
                       ),
                     ],
                   ),
@@ -94,9 +147,13 @@ class DetailedView extends StatelessWidget {
                     children: [
                       const Icon(Icons.location_on),
                       const SizedBox(width: 10),
-                      Text(
-                        event.location, // Display event location
-                        style: const TextStyle(fontSize: 16),
+                      Expanded(
+                        child: Text(
+                          event.location,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 16),
+                        ),
                       ),
                     ],
                   ),
@@ -108,15 +165,32 @@ class DetailedView extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Description',
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Description',
+                        style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900),
+                      ),
+                      IconButton(
+                        icon: Icon(
+                          isDescriptionVisible ? Icons.expand_less : Icons.expand_more,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            isDescriptionVisible = !isDescriptionVisible; // Toggle visibility
+                          });
+                        },
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 8),
-                  Text(
-                    event.description, // Display event description
-                    style: const TextStyle(fontSize: 16),
-                  ),
+                  if (isDescriptionVisible)
+                    Text(
+                      event.description,
+                      style: const TextStyle(fontSize: 16),
+                      textAlign: TextAlign.justify,
+                    ),
                   const SizedBox(height: 20),
                 ],
               ),
@@ -128,12 +202,12 @@ class DetailedView extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 50,
-                  vertical: 15,
+                  vertical: 10,
                 ),
                 backgroundColor: const Color.fromARGB(255, 16, 118, 202),
               ),
               child: const Text(
-                'Register',
+                'Join Event',
                 style: TextStyle(fontSize: 24, color: Colors.white),
               ),
             ),

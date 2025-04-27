@@ -14,9 +14,12 @@ class EventCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap, // Handle tap events
+      onTap: onTap,
       child: Card(
-        margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+        margin: EdgeInsets.symmetric(
+          vertical: MediaQuery.of(context).size.height * 0.005,
+          horizontal: MediaQuery.of(context).size.width * 0.02,
+        ),
         elevation: 4,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),
