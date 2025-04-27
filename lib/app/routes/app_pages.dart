@@ -1,5 +1,5 @@
 import 'package:get/get.dart';
-import 'package:univents_mobile/app/views/detailedview.dart';
+import 'package:univents_mobile/app/widgets/detailedview.dart';
 import 'package:univents_mobile/app/views/login.dart';
 import 'package:univents_mobile/app/views/dashboard.dart';
 import 'package:univents_mobile/app/views/search.dart';
