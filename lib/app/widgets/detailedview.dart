@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:univents_mobile/app/data/models/events.dart';
 import 'package:univents_mobile/app/data/models/organization.dart';
 import 'package:intl/intl.dart';
@@ -12,7 +13,10 @@ class DetailedView extends StatefulWidget {
 }
 
 class _DetailedViewState extends State<DetailedView> {
-  bool isDescriptionVisible = true; // State to track visibility of the description
+  bool isDescriptionVisible =
+      true; // State to track visibility of the description
+
+  final supabase = Supabase.instance.client;
 
   @override
   Widget build(BuildContext context) {
@@ -92,8 +96,11 @@ class _DetailedViewState extends State<DetailedView> {
                       const Icon(Icons.calendar_month),
                       const SizedBox(width: 10),
                       Text(
-                        event.datetimestart.toLocal().day == event.datetimeend.toLocal().day
-                            ? DateFormat('MMMM d, yyyy').format(event.datetimestart.toLocal())
+                        event.datetimestart.toLocal().day ==
+                                event.datetimeend.toLocal().day
+                            ? DateFormat(
+                              'MMMM d, yyyy',
+                            ).format(event.datetimestart.toLocal())
                             : '${DateFormat('MMMM d, yyyy').format(event.datetimestart.toLocal())} - ${DateFormat('MMMM d, yyyy').format(event.datetimeend.toLocal())}',
                         style: const TextStyle(fontSize: 16),
                       ),
@@ -133,7 +140,10 @@ class _DetailedViewState extends State<DetailedView> {
                       Expanded(
                         child: Text(
                           event.tags
-                              .map((tag) => tag[0].toUpperCase() + tag.substring(1))
+                              .map(
+                                (tag) =>
+                                    tag[0].toUpperCase() + tag.substring(1),
+                              )
                               .join(', '),
                           style: const TextStyle(fontSize: 16),
                           overflow: TextOverflow.ellipsis,
@@ -170,15 +180,21 @@ class _DetailedViewState extends State<DetailedView> {
                     children: [
                       const Text(
                         'Description',
-                        style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900),
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w900,
+                        ),
                       ),
                       IconButton(
                         icon: Icon(
-                          isDescriptionVisible ? Icons.expand_less : Icons.expand_more,
+                          isDescriptionVisible
+                              ? Icons.expand_less
+                              : Icons.expand_more,
                         ),
                         onPressed: () {
                           setState(() {
-                            isDescriptionVisible = !isDescriptionVisible; // Toggle visibility
+                            isDescriptionVisible =
+                                !isDescriptionVisible; // Toggle visibility
                           });
                         },
                       ),
@@ -196,8 +212,80 @@ class _DetailedViewState extends State<DetailedView> {
               ),
             ),
             ElevatedButton(
-              onPressed: () {
-                // Register functionality can be implemented here
+              onPressed: () async {
+                try {
+                  print('Joining event: ${event.uid}');
+
+                  final currentUser = supabase.auth.currentUser;
+                  final userEmail = currentUser?.userMetadata?['email'];
+
+                  if (userEmail == null) {
+                    throw 'Error: User email is missing in metadata.';
+                  }
+
+                  final accountResponse = await supabase
+                      .from('accounts')
+                      .select('uid')
+                      .eq('email', userEmail)
+                      .maybeSingle();
+
+                  if (accountResponse == null) {
+                    throw 'Error fetching accountid: $accountResponse';
+                  }
+
+                  final accountId = accountResponse?['uid'] as String;
+                  if (accountId == null) {
+                    throw 'Error: No account found for the current user';
+                  }
+
+                  print('Account ID: $accountId'); // Debug: Print the accountid
+
+                  // Check if an entry already exists in the attendees table
+                  final attendeeResponse = await supabase
+                      .from('attendees')
+                      .select('uid') // Select the primary key or any column
+                      .eq('accountid', accountId)
+                      .eq('eventid', event.uid as Object)
+                      .maybeSingle(); // Get a single row or null if no match
+
+                  if (attendeeResponse != null) {
+                    // Entry already exists
+                    print('User is already registered for this event');
+                    Get.snackbar(
+                      'Already Registered',
+                      'You are already registered for this event.',
+                      backgroundColor: Colors.red,
+                      colorText: Colors.white,
+                    );
+                  return;
+                  }
+
+                  // Add a new entry to the attendees table
+                  final insertResponse = await supabase
+                    .from('attendees')
+                    .insert({
+                      'accountid': accountId,
+                      'datetimestamp': DateTime.now().toUtc().toIso8601String(),
+                      'status': true,
+                      'eventid': event.uid,
+                  });
+
+                  print('Successfully registered for the event!');
+                  Get.snackbar(
+                    'Registration Successful',
+                    'You have successfully registered for the event.',
+                    backgroundColor: Colors.green,
+                    colorText: Colors.white,
+                  );
+                } catch (e) {
+                  print('Error during event registration: $e');
+                  Get.snackbar(
+                    'Registration Failed',
+                    'An error occurred while registering for the event.',
+                    backgroundColor: Colors.red,
+                    colorText: Colors.white,
+                  );
+                }
               },
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(

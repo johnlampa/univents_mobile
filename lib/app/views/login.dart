@@ -252,6 +252,49 @@ class _LoginPageState extends State<LoginPage> {
             accessToken: accessToken,
           );
 
+          // Check if the email exists in the accounts table
+          final currentUser = supabase.auth.currentUser;
+          final userEmail = currentUser?.userMetadata?['email'];
+          final fullName = currentUser?.userMetadata?['full_name'];
+
+          if (userEmail == null || fullName == null) {
+            throw 'User email or full name is missing in metadata';
+          }
+
+          // Split full_name into first name and last name
+          final nameParts = fullName.split(' ');
+          final firstName = nameParts.sublist(0, nameParts.length - 1).join(' ');
+          final lastName = nameParts.last;
+
+          // Query the accounts table to check if the email exists
+        final response = await supabase
+          .from('accounts')
+          .select('email')
+          .eq('email', userEmail);
+
+        if (response == null) {
+          throw 'Error: No response from Supabase';
+        }
+
+        final accounts = response as List;
+
+        if (accounts.isEmpty) {
+          // Email does not exist, insert a new row
+          final insertResponse = await supabase
+              .from('accounts')
+              .insert({
+                'firstname': firstName,
+                'lastname': lastName,
+                'email': userEmail,
+                'role': 'student',
+                'status': true, // Boolean true
+              });
+
+          print('New account created: $insertResponse');
+        } else {
+          print('Email already exists in accounts table');
+        }
+
           Get.offNamed('/dashboard');
         } catch (e) {
           _showAlertDialog(
