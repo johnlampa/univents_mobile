@@ -290,10 +290,6 @@ class _LoginPageState extends State<LoginPage> {
                 'status': true, // Boolean true
               });
 
-          if (insertResponse == null) {
-            throw 'Error inserting into accounts table';
-          }
-
           print('New account created: $insertResponse');
         } else {
           print('Email already exists in accounts table');
