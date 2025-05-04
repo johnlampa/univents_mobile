@@ -6,7 +6,7 @@ import 'package:univents_mobile/app/data/databases/event_database.dart';
 import 'package:univents_mobile/app/data/databases/organization_database.dart';
 import 'package:univents_mobile/app/widgets/eventcard.dart';
 import 'package:univents_mobile/app/widgets/bottomnav.dart';
-import 'package:univents_mobile/app/widgets/searchbar.dart'; // ✅ Import CustomSearchBar
+import 'package:univents_mobile/app/widgets/searchbar.dart';
 
 class OrganizationEventPage extends StatefulWidget {
   const OrganizationEventPage({super.key});
@@ -32,16 +32,29 @@ class _OrganizationEventPageState extends State<OrganizationEventPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('${organization.acronym} Events'),
+        title: Row(
+          children: [
+            CircleAvatar(
+              backgroundImage: NetworkImage(organization.logo), // Organization logo
+              radius: 16, // Adjust the size of the logo
+            ),
+            const SizedBox(width: 8), // Add spacing between the logo and text
+            Text('${organization.acronym} Events'),
+          ],
+        ),
       ),
       body: Column(
         children: [
+          SizedBox(height: 10),
           // Add the CustomSearchBar
-          CustomSearchBar(
-            searchController: searchController,
-            onChanged: (value) {
-              setState(() {}); // Trigger a rebuild when the search input changes
-            },
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10.0),
+            child: CustomSearchBar(
+              searchController: searchController,
+              onChanged: (value) {
+                setState(() {}); // Trigger a rebuild when the search input changes
+              },
+            ),
           ),
           Expanded(
             child: StreamBuilder<List<Event>>(

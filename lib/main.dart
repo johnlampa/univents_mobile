@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'app/routes/app_pages.dart';
 import 'app/routes/app_routes.dart';
 import 'package:univents_mobile/config/config.dart';
+import 'package:get_storage/get_storage.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -12,7 +13,7 @@ void main() async {
     url: supabaseUrl,
     anonKey: supabaseAnonKey,
   );
-
+  await GetStorage.init();
   runApp(const MyApp());
 }
 

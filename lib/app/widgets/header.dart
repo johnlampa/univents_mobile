@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -17,6 +18,9 @@ class Header extends StatelessWidget implements PreferredSizeWidget {
 
       final GoogleSignIn googleSignIn = GoogleSignIn();
       await googleSignIn.signOut();
+
+      final box = GetStorage();
+      box.remove('searchHistory');
 
       Get.offAllNamed('/login');
     } catch (e) {
