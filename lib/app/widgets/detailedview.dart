@@ -59,7 +59,7 @@ class _DetailedViewState extends State<DetailedView> {
           .from('attendees')
           .select('uid')
           .eq('accountid', accountId)
-          .eq('eventid', event.uid as Object) // Use the class-level event variable
+          .eq('eventid', event.uid as Object)
           .maybeSingle();
 
       if (attendeeResponse != null) {
@@ -71,6 +71,33 @@ class _DetailedViewState extends State<DetailedView> {
     } catch (e) {
       print('Error checking registration status: $e');
     }
+  }
+
+  Future<bool?> _showConfirmationDialog(
+      BuildContext context, String title, String message) {
+    return showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(title),
+          content: Text(message),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(false); // User cancels
+              },
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(true); // User confirms
+              },
+              child: const Text('Confirm'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -263,80 +290,144 @@ class _DetailedViewState extends State<DetailedView> {
               ),
             ),
             ElevatedButton(
-              onPressed: isRegistered
-                  ? null // Disable the button if the user is already registered
-                  : () async {
-                      try {
-                        print('Joining event: ${event.uid}');
+              onPressed: () async {
+                if (isRegistered) {
+                  // Prompt for confirmation to unjoin
+                  final shouldUnjoin = await _showConfirmationDialog(
+                    context,
+                    'Unjoin Event',
+                    'Are you sure you want to unjoin this event?',
+                  );
 
-                        final currentUser = supabase.auth.currentUser;
-                        final userEmail = currentUser?.userMetadata?['email'];
+                  if (shouldUnjoin == true) {
+                    try {
+                      final currentUser = supabase.auth.currentUser;
+                      final userEmail = currentUser?.userMetadata?['email'];
 
-                        if (userEmail == null) {
-                          throw 'Error: User email is missing in metadata.';
-                        }
-
-                        final accountResponse = await supabase
-                            .from('accounts')
-                            .select('uid')
-                            .eq('email', userEmail)
-                            .maybeSingle();
-
-                        if (accountResponse == null) {
-                          throw 'Error fetching accountid: $accountResponse';
-                        }
-
-                        final accountId = accountResponse?['uid'] as String;
-                        if (accountId == null) {
-                          throw 'Error: No account found for the current user';
-                        }
-
-                        print('Account ID: $accountId'); // Debug: Print the accountid
-
-                        // Add a new entry to the attendees table
-                        final insertResponse = await supabase
-                            .from('attendees')
-                            .insert({
-                              'accountid': accountId,
-                              'datetimestamp': DateTime.now()
-                                  .toUtc()
-                                  .add(const Duration(hours: 8))
-                                  .toIso8601String(),
-                              'status': true,
-                              'eventid': event.uid,
-                            });
-
-                        print('Successfully registered for the event!');
-                        setState(() {
-                          isRegistered = true; // Update the state to reflect registration
-                        });
-                        Get.snackbar(
-                          'Registration Successful',
-                          'You have successfully registered for the event.',
-                          backgroundColor: Colors.green,
-                          colorText: Colors.white,
-                        );
-                      } catch (e) {
-                        print('Error during event registration: $e');
-                        Get.snackbar(
-                          'Registration Failed',
-                          'An error occurred while registering for the event.',
-                          backgroundColor: Colors.red,
-                          colorText: Colors.white,
-                        );
+                      if (userEmail == null) {
+                        throw 'Error: User email is missing in metadata.';
                       }
-                    },
+
+                      // Fetch the account ID for the current user
+                      final accountResponse = await supabase
+                          .from('accounts')
+                          .select('uid')
+                          .eq('email', userEmail)
+                          .maybeSingle();
+
+                      if (accountResponse == null ||
+                          accountResponse['uid'] == null) {
+                        throw 'Error: No account found for the current user';
+                      }
+
+                      final accountId = accountResponse['uid'] as String;
+
+                      // Update the status column in the attendees table
+                      final updateResponse = await supabase
+                          .from('attendees')
+                          .update({'status': false}) // Set status to false
+                          .eq('accountid', accountId)
+                          .eq('eventid', event.uid as Object)
+                          .select();
+
+                      if (updateResponse.isEmpty) {
+                        throw 'Error: Update operation returned no data.';
+                      }
+
+                      print('Successfully unjoined the event!');
+                      setState(() {
+                        isRegistered = false; // Update the state to reflect unjoining
+                      });
+                      Get.snackbar(
+                        'Unjoined Event',
+                        'You have successfully unjoined the event.',
+                        backgroundColor: Colors.orange,
+                        colorText: Colors.white,
+                      );
+                    } catch (e) {
+                      print('Error during unjoining: $e');
+                      Get.snackbar(
+                        'Error',
+                        'An error occurred while unjoining the event.',
+                        backgroundColor: Colors.red,
+                        colorText: Colors.white,
+                      );
+                    }
+                  }
+                } else {
+                  // Proceed with joining the event
+                  try {
+                    print('Joining event: ${event.uid}');
+
+                    final currentUser = supabase.auth.currentUser;
+                    final userEmail = currentUser?.userMetadata?['email'];
+
+                    if (userEmail == null) {
+                      throw 'Error: User email is missing in metadata.';
+                    }
+
+                    final accountResponse = await supabase
+                        .from('accounts')
+                        .select('uid')
+                        .eq('email', userEmail)
+                        .maybeSingle();
+
+                    if (accountResponse == null) {
+                      throw 'Error fetching accountid: $accountResponse';
+                    }
+
+                    final accountId = accountResponse?['uid'] as String;
+                    if (accountId == null) {
+                      throw 'Error: No account found for the current user';
+                    }
+
+                    print('Account ID: $accountId'); // Debug: Print the accountid
+
+                    // Add a new entry to the attendees table
+                    final insertResponse = await supabase
+                        .from('attendees')
+                        .insert({
+                          'accountid': accountId,
+                          'datetimestamp': DateTime.now()
+                              .toUtc()
+                              .add(const Duration(hours: 8))
+                              .toIso8601String(),
+                          'status': true,
+                          'eventid': event.uid,
+                        });
+
+                    print('Successfully registered for the event!');
+                    setState(() {
+                      isRegistered = true; // Update the state to reflect registration
+                    });
+                    Get.snackbar(
+                      'Registration Successful',
+                      'You have successfully registered for the event.',
+                      backgroundColor: Colors.green,
+                      colorText: Colors.white,
+                    );
+                  } catch (e) {
+                    print('Error during event registration: $e');
+                    Get.snackbar(
+                      'Registration Failed',
+                      'An error occurred while registering for the event.',
+                      backgroundColor: Colors.red,
+                      colorText: Colors.white,
+                    );
+                  }
+                }
+              },
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 50,
                   vertical: 10,
                 ),
                 backgroundColor: isRegistered
-                    ? Colors.grey // Grey color if already registered
+                    ? Colors.orange // Orange color if already registered
                     : const Color.fromARGB(255, 16, 118, 202), // Default color
               ),
               child: Text(
-                isRegistered ? 'Joined' : 'Join Event', // Change text based on registration status
+                isRegistered ? 'Unjoin Event' : 'Join Event', // Change text based on registration status
                 style: const TextStyle(fontSize: 24, color: Colors.white),
               ),
             ),
