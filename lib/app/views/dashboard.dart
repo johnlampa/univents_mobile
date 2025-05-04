@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:get/get.dart';
 import 'package:univents_mobile/app/data/models/organization.dart';
@@ -8,6 +7,8 @@ import 'package:univents_mobile/app/widgets/bottomnav.dart';
 import 'package:univents_mobile/app/data/databases/event_database.dart';
 import 'package:univents_mobile/app/data/databases/organization_database.dart';
 import 'package:univents_mobile/app/widgets/eventcard.dart';
+import 'package:univents_mobile/app/widgets/header.dart';
+import 'package:univents_mobile/app/widgets/searchbar.dart';
 
 class Dashboard extends StatefulWidget {
   const Dashboard({super.key});
@@ -42,29 +43,8 @@ class _DashboardState extends State<Dashboard> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        toolbarHeight: 80,
-        title: Container(
-          margin: const EdgeInsets.only(top: 0),
-          child: Row(
-            children: [
-              SizedBox(
-                height: 50,
-                width: 50,
-                child: Image.network(adduLogo, fit: BoxFit.contain),
-              ),
-              const SizedBox(width: 10),
-              Text(
-                'Ateneo Events',
-                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          logOutButton(),
-        ],
+      appBar: Header(
+        adduLogo: adduLogo,
       ),
       body: SingleChildScrollView(
         child: userName != null
@@ -107,23 +87,6 @@ class _DashboardState extends State<Dashboard> {
     );
   }
 
-  IconButton logOutButton() {
-    return IconButton(
-          icon: const Icon(Icons.logout),
-          onPressed: () async {
-            try {
-              await supabase.auth.signOut();
-
-              final GoogleSignIn googleSignIn = GoogleSignIn();
-              await googleSignIn.signOut();
-
-              Get.offAllNamed('/login');
-            } catch (e) {
-              print('Error during logout: $e');
-            }
-          },
-        );
-  }
 
   SizedBox getUserName() {
     return SizedBox(
@@ -189,7 +152,12 @@ class EventsListView extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        searchBar(searchController),
+        CustomSearchBar(
+          searchController: searchController,
+          onChanged: (value) {
+            // Handle search input changes here if needed
+          },
+        ),
         const SizedBox(height: 10),
 
         StreamBuilder(
@@ -340,37 +308,5 @@ class EventsListView extends StatelessWidget {
         ),
       ],
     );
-  }
-
-  Padding searchBar(TextEditingController searchController) {
-    return Padding(
-        padding: const EdgeInsets.all(10.0),
-        child: TextField(
-          controller: searchController,
-          decoration: InputDecoration(
-            hintText: 'Search events...',
-            prefixIcon: const Icon(Icons.search),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(
-                color: Colors.blue,
-                width: 2.0,
-              ),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(
-                color: Colors.grey, 
-                width: 1.0,
-              ),
-            ),
-          ),
-          onChanged: (value) {
-          },
-        ),
-      );
   }
 }
