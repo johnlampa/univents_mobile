@@ -18,6 +18,8 @@ class OrganizationEventPage extends StatefulWidget {
 class _OrganizationEventPageState extends State<OrganizationEventPage> {
   int _selectedIndex = 1;
   final TextEditingController searchController = TextEditingController();
+  final List<String> selectedTags = []; // To track selected tags for filtering
+  final List<String> availableTags = ['Forum', 'Advocacy', 'Engagement', 'Career Talk', 'Seminar', 'Competition', 'Cluster', 'Webinar', 'Art Contest', 'Quiz Bowl', 'Olympiad', 'Talk']; // Predefined tags
 
   @override
   void dispose() {
@@ -45,7 +47,7 @@ class _OrganizationEventPageState extends State<OrganizationEventPage> {
       ),
       body: Column(
         children: [
-          SizedBox(height: 10),
+          const SizedBox(height: 10),
           // Add the CustomSearchBar
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 10.0),
@@ -54,6 +56,28 @@ class _OrganizationEventPageState extends State<OrganizationEventPage> {
               onChanged: (value) {
                 setState(() {}); // Trigger a rebuild when the search input changes
               },
+            ),
+          ),
+          // Add the filter section
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10.0),
+            child: Wrap(
+              spacing: 8.0,
+              children: availableTags.map((tag) {
+                return FilterChip(
+                  label: Text(tag),
+                  selected: selectedTags.contains(tag),
+                  onSelected: (isSelected) {
+                    setState(() {
+                      if (isSelected) {
+                        selectedTags.add(tag); // Add tag to selected list
+                      } else {
+                        selectedTags.remove(tag); // Remove tag from selected list
+                      }
+                    });
+                  },
+                );
+              }).toList(),
             ),
           ),
           Expanded(
@@ -69,10 +93,16 @@ class _OrganizationEventPageState extends State<OrganizationEventPage> {
                     .where((event) => event.orguid == organization.uid)
                     .toList();
 
-                // Filter events based only on the event.title
+                // Filter events based on the search query and selected tags
                 final filteredEvents = orgEvents.where((event) {
-                  final query = searchController.text.toLowerCase();
-                  return event.title.toLowerCase().contains(query);
+                  final query = searchController.text.toLowerCase().trim();
+                  final matchesQuery = event.title.toLowerCase().contains(query);
+
+                  final matchesTags = selectedTags.isEmpty ||
+                    selectedTags.every((selected) =>
+                        event.tags.map((t) => t.toLowerCase()).contains(selected.toLowerCase()));
+
+                  return matchesQuery && matchesTags;
                 }).toList();
 
                 if (filteredEvents.isEmpty) {
