@@ -3,4 +3,5 @@ class AppRoutes {
   static const String dashboard = '/dashboard';
   static const String search = '/search';
   static const String detailedView = '/detailedview';
+  static const String organizationEvent = '/organizationevent';
 }

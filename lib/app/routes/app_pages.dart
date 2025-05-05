@@ -3,6 +3,7 @@ import 'package:univents_mobile/app/widgets/detailedview.dart';
 import 'package:univents_mobile/app/views/login.dart';
 import 'package:univents_mobile/app/views/dashboard.dart';
 import 'package:univents_mobile/app/views/search.dart';
+import 'package:univents_mobile/app/widgets/organizationevent.dart';
 import 'app_routes.dart';
 
 class AppPages {
@@ -23,5 +24,8 @@ class AppPages {
       name: AppRoutes.detailedView,
       page: () => const DetailedView(), // DetailedView route
     ),
+    GetPage(
+      name: '/organizationevent', 
+      page: () => const OrganizationEventPage()),
   ];
 }
